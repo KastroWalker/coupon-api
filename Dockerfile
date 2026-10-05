@@ -1,0 +1,20 @@
+FROM eclipse-temurin:21-jdk AS build
+WORKDIR /workspace
+
+COPY mvnw pom.xml ./
+COPY .mvn .mvn
+RUN chmod +x mvnw && ./mvnw -B -q dependency:go-offline
+
+COPY src src
+RUN ./mvnw -B -q clean package -DskipTests \
+    && mv target/coupon-api-*.jar target/app.jar
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+
+RUN useradd --system --no-create-home appuser
+COPY --from=build /workspace/target/app.jar app.jar
+USER appuser
+
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
