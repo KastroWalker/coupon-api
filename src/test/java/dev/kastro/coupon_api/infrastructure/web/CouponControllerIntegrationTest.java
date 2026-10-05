@@ -87,17 +87,10 @@ class CouponControllerIntegrationTest {
     }
 
     @Test
-    void shouldCreateCouponWith1000CharactersDescription() throws Exception {
-        perform(body("ABC123", "a".repeat(1000), "1", Instant.now().plusSeconds(3600), ""))
+    void shouldCreateCouponWithLongDescription() throws Exception {
+        perform(body("ABC123", "a".repeat(100_000), "1", Instant.now().plusSeconds(3600), ""))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.description").value("a".repeat(1000)));
-    }
-
-    @Test
-    void shouldRejectDescriptionLongerThan1000CharactersAndInformLimit() throws Exception {
-        perform(body("ABC123", "a".repeat(1001), "1", Instant.now().plusSeconds(3600), ""))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.messages[0]").value("description must have at most 1000 characters"));
+                .andExpect(jsonPath("$.description").value("a".repeat(100_000)));
     }
 
     @Test

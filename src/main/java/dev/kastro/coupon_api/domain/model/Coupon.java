@@ -10,8 +10,6 @@ import java.util.UUID;
 
 public class Coupon {
 
-    public static final int DESCRIPTION_MAX_LENGTH = 1000;
-
     private final UUID id;
     private final CouponCode code;
     private final String description;
@@ -37,9 +35,6 @@ public class Coupon {
                                 Instant expirationDate, boolean published, Clock clock) {
         if (description == null || description.isBlank()) {
             throw new InvalidCouponException("description is required");
-        }
-        if (description.length() > DESCRIPTION_MAX_LENGTH) {
-            throw new InvalidCouponException("description must have at most " + DESCRIPTION_MAX_LENGTH + " characters");
         }
         if (expirationDate == null) {
             throw new InvalidCouponException("expirationDate is required");

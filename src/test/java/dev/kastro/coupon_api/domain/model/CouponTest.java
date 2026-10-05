@@ -107,16 +107,9 @@ class CouponTest {
     }
 
     @Test
-    void shouldAcceptDescriptionWith1000Characters() {
-        assertThat(create("ABC123", "a".repeat(1000), BigDecimal.ONE, FUTURE, false).getDescription())
-                .hasSize(1000);
-    }
-
-    @Test
-    void shouldRejectDescriptionWithMoreThan1000Characters() {
-        assertThatThrownBy(() -> create("ABC123", "a".repeat(1001), BigDecimal.ONE, FUTURE, false))
-                .isInstanceOf(InvalidCouponException.class)
-                .hasMessageContaining("1000");
+    void shouldAcceptLongDescription() {
+        assertThat(create("ABC123", "a".repeat(100_000), BigDecimal.ONE, FUTURE, false).getDescription())
+                .hasSize(100_000);
     }
 
     @Test

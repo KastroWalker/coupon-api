@@ -16,13 +16,15 @@ import java.util.UUID;
 @Table(name = "coupons")
 public class CouponJpaEntity {
 
+    private static final int DESCRIPTION_MAX_LENGTH = 1_000_000_000;
+
     @Id
     private UUID id;
 
     @Column(nullable = false, length = 6)
     private String code;
 
-    @Column(nullable = false, length = 1000)
+    @Column(nullable = false, length = DESCRIPTION_MAX_LENGTH)
     private String description;
 
     @Column(nullable = false, precision = 19, scale = 4)
