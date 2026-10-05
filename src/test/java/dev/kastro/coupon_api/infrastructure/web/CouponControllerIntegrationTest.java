@@ -15,8 +15,11 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -157,6 +160,46 @@ class CouponControllerIntegrationTest {
         mockMvc.perform(get("/coupon/{id}", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id.toString()));
+    }
+
+    @Test
+    void shouldSoftDeleteCouponAndReturnNoContent() throws Exception {
+        UUID id = persist(Instant.now().plusSeconds(3600), CouponStatus.ACTIVE);
+
+        mockMvc.perform(delete("/coupon/{id}", id))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+
+        CouponJpaEntity entity = jpaRepository.findById(id).orElseThrow();
+        assertThat(entity.getStatus()).isEqualTo(CouponStatus.DELETED);
+        assertThat(entity.getCode()).isEqualTo("ABC123");
+        assertThat(entity.getDescription()).isEqualTo("desc");
+        assertThat(entity.getDiscountValue()).isEqualByComparingTo("0.8");
+    }
+
+    @Test
+    void shouldReturnConflictWhenDeletingAlreadyDeletedCoupon() throws Exception {
+        UUID id = persist(Instant.now().plusSeconds(3600), CouponStatus.ACTIVE);
+        mockMvc.perform(delete("/coupon/{id}", id)).andExpect(status().isNoContent());
+
+        mockMvc.perform(delete("/coupon/{id}", id))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.messages").isNotEmpty());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenDeletingNonexistentCoupon() throws Exception {
+        mockMvc.perform(delete("/coupon/{id}", UUID.randomUUID()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenDeletingWithInvalidUuid() throws Exception {
+        mockMvc.perform(delete("/coupon/{id}", "not-a-uuid"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
     }
 
     @Test

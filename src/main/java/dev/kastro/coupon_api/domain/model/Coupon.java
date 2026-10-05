@@ -1,5 +1,6 @@
 package dev.kastro.coupon_api.domain.model;
 
+import dev.kastro.coupon_api.domain.exception.CouponAlreadyDeletedException;
 import dev.kastro.coupon_api.domain.exception.InvalidCouponException;
 
 import java.math.BigDecimal;
@@ -60,6 +61,14 @@ public class Coupon {
     public static Coupon restore(UUID id, CouponCode code, String description, DiscountValue discountValue,
                                  Instant expirationDate, boolean published, boolean redeemed, CouponStatus status) {
         return new Coupon(id, code, description, discountValue, expirationDate, published, redeemed, status);
+    }
+
+    public Coupon delete() {
+        if (status == CouponStatus.DELETED) {
+            throw new CouponAlreadyDeletedException(id);
+        }
+        return new Coupon(id, code, description, discountValue, expirationDate, published, redeemed,
+                CouponStatus.DELETED);
     }
 
     public UUID getId() { return id; }

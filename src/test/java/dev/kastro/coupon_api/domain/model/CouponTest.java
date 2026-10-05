@@ -1,5 +1,6 @@
 package dev.kastro.coupon_api.domain.model;
 
+import dev.kastro.coupon_api.domain.exception.CouponAlreadyDeletedException;
 import dev.kastro.coupon_api.domain.exception.InvalidCouponException;
 import org.junit.jupiter.api.Test;
 
@@ -116,6 +117,41 @@ class CouponTest {
         assertThatThrownBy(() -> create("ABC123", "a".repeat(1001), BigDecimal.ONE, FUTURE, false))
                 .isInstanceOf(InvalidCouponException.class)
                 .hasMessageContaining("1000");
+    }
+
+    @Test
+    void shouldMarkCouponAsDeletedPreservingRegistrationData() {
+        Coupon coupon = create("ABC123", "desc", new BigDecimal("2"), FUTURE, true);
+
+        Coupon deleted = coupon.delete();
+
+        assertThat(deleted.getStatus()).isEqualTo(CouponStatus.DELETED);
+        assertThat(deleted.getId()).isEqualTo(coupon.getId());
+        assertThat(deleted.getCode()).isEqualTo(coupon.getCode());
+        assertThat(deleted.getDescription()).isEqualTo("desc");
+        assertThat(deleted.getDiscountValue()).isEqualTo(coupon.getDiscountValue());
+        assertThat(deleted.getExpirationDate()).isEqualTo(FUTURE);
+        assertThat(deleted.isPublished()).isTrue();
+    }
+
+    @Test
+    void shouldDeleteUnpublishedCoupon() {
+        assertThat(create("ABC123").delete().getStatus()).isEqualTo(CouponStatus.DELETED);
+    }
+
+    @Test
+    void shouldDeleteExpiredCoupon() {
+        Coupon expired = Coupon.restore(UUID.randomUUID(), new CouponCode("ABC123"), "desc",
+                new DiscountValue(BigDecimal.ONE), NOW.minusSeconds(86400), true, false, CouponStatus.ACTIVE);
+
+        assertThat(expired.delete().getStatus()).isEqualTo(CouponStatus.DELETED);
+    }
+
+    @Test
+    void shouldRejectDeletingAlreadyDeletedCoupon() {
+        Coupon deleted = create("ABC123").delete();
+
+        assertThatThrownBy(deleted::delete).isInstanceOf(CouponAlreadyDeletedException.class);
     }
 
     @Test

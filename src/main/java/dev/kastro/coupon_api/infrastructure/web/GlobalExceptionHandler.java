@@ -1,5 +1,6 @@
 package dev.kastro.coupon_api.infrastructure.web;
 
+import dev.kastro.coupon_api.domain.exception.CouponAlreadyDeletedException;
 import dev.kastro.coupon_api.domain.exception.CouponNotFoundException;
 import dev.kastro.coupon_api.domain.exception.InvalidCouponException;
 import org.springframework.http.HttpStatus;
@@ -35,6 +36,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CouponNotFoundException.class)
     ResponseEntity<ErrorResponse> handleNotFound(CouponNotFoundException ex) {
         HttpStatus status = HttpStatus.NOT_FOUND;
+        return ResponseEntity.status(status).body(new ErrorResponse(status.value(), status.getReasonPhrase(), List.of(ex.getMessage())));
+    }
+
+    @ExceptionHandler(CouponAlreadyDeletedException.class)
+    ResponseEntity<ErrorResponse> handleAlreadyDeleted(CouponAlreadyDeletedException ex) {
+        HttpStatus status = HttpStatus.CONFLICT;
         return ResponseEntity.status(status).body(new ErrorResponse(status.value(), status.getReasonPhrase(), List.of(ex.getMessage())));
     }
 
